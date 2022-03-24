@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from custom_command import LinkCountingCommand
+from custom_command import FormCountingCommand, LinkCountingCommand
 from openwpm.command_sequence import CommandSequence
 from openwpm.commands.browser_commands import GetCommand
 from openwpm.config import BrowserParams, ManagerParams
@@ -10,9 +10,9 @@ from openwpm.task_manager import TaskManager
 # The list of sites that we wish to crawl
 NUM_BROWSERS = 1
 sites = [
-    "http://www.example.com",
+    # "http://www.example.com",
     "http://www.princeton.edu",
-    "http://citp.princeton.edu/",
+    # "http://citp.princeton.edu/",
 ]
 
 # Loads the default ManagerParams
@@ -67,11 +67,13 @@ with TaskManager(
             site_rank=index,
             callback=callback,
         )
-
+        # command_sequence.get()
+        # command_sequence.browse(num_links=2, sleep=20, timeout=60)
         # Start by visiting the page
         command_sequence.append_command(GetCommand(url=site, sleep=3), timeout=60)
         # Have a look at custom_command.py to see how to implement your own command
-        command_sequence.append_command(LinkCountingCommand())
+        # command_sequence.append_command(LinkCountingCommand())
+        command_sequence.append_command(FormCountingCommand())
 
         # Run commands across all browsers (simple parallelization)
         manager.execute_command_sequence(command_sequence)

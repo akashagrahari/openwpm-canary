@@ -1,6 +1,7 @@
 # Docker volume
 docker-volume/
-
+.DS_Store
+*/.DS_Store
 # pytest
 .pytest_cache/
 

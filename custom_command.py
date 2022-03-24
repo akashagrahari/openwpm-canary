@@ -17,6 +17,31 @@ from openwpm.commands.types import BaseCommand
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.socket_interface import ClientSocket
 
+class FormCountingCommand(BaseCommand):
+    def __init__(self) -> None:
+        self.logger = logging.getLogger("openwpm")
+
+    # While this is not strictly necessary, we use the repr of a command for logging
+    # So not having a proper repr will make your logs a lot less useful
+    def __repr__(self) -> str:
+        return "LinkCountingCommand"
+
+    # Have a look at openwpm.commands.types.BaseCommand.execute to see
+    # an explanation of each parameter
+    def execute(
+        self,
+        webdriver: Firefox,
+        browser_params: BrowserParams,
+        manager_params: ManagerParams,
+        extension_socket: ClientSocket,
+    ) -> None:
+        forms = webdriver.find_elements_by_tag_name("form")
+        for form in forms:
+            print("form text: ", form.text, " ; form id: ", form.id)
+            
+        # current_url = webdriver.current_url
+        # link_count = len(webdriver.find_elements(By.TAG_NAME, "a"))
+        # self.logger.info("There are %d links on %s", link_count, current_url)
 
 class LinkCountingCommand(BaseCommand):
     """This command logs how many links it found on any given page"""
@@ -41,3 +66,6 @@ class LinkCountingCommand(BaseCommand):
         current_url = webdriver.current_url
         link_count = len(webdriver.find_elements(By.TAG_NAME, "a"))
         self.logger.info("There are %d links on %s", link_count, current_url)
+        print(webdriver.find_element(By.TAG_NAME, "a"))
+        print(webdriver.find_element(By.TAG_NAME, "a").text)
+        print(webdriver.find_element(By.TAG_NAME, "a").size)

@@ -16,6 +16,8 @@ from selenium.webdriver.common.by import By
 from openwpm.commands.types import BaseCommand
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.socket_interface import ClientSocket
+from PIL import Image
+import io
 
 class FormCountingCommand(BaseCommand):
     def __init__(self) -> None:
@@ -37,7 +39,13 @@ class FormCountingCommand(BaseCommand):
     ) -> None:
         forms = webdriver.find_elements_by_tag_name("form")
         for form in forms:
-            print("form text: ", form.text, " ; form id: ", form.id)
+            form_parent = form.find_element_by_xpath("..").find_element_by_xpath("..")
+            image = form_parent.screenshot_as_png
+            imageStream = io.BytesIO(image)
+            im = Image.open(imageStream)
+            im.save("./blahness.png")
+            print("the real form:" + form_parent.get_attribute("outerHTML"))
+            print("form text: ", form.text, " ; form id: ", form.get_attribute('id'))
             
         # current_url = webdriver.current_url
         # link_count = len(webdriver.find_elements(By.TAG_NAME, "a"))

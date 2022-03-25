@@ -11,8 +11,10 @@ from openwpm.task_manager import TaskManager
 NUM_BROWSERS = 1
 sites = [
     # "http://www.example.com",
-    "http://www.princeton.edu",
+    # "http://www.princeton.edu",
     # "http://citp.princeton.edu/",
+    "http://www.jeep.com",
+    # "https://www.jeep.com/wagoneer.html",
 ]
 
 # Loads the default ManagerParams
@@ -74,6 +76,7 @@ with TaskManager(
         # Have a look at custom_command.py to see how to implement your own command
         # command_sequence.append_command(LinkCountingCommand())
         command_sequence.append_command(FormCountingCommand())
+        
 
         # Run commands across all browsers (simple parallelization)
         manager.execute_command_sequence(command_sequence)

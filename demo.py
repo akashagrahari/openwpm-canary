@@ -6,15 +6,11 @@ from openwpm.commands.browser_commands import GetCommand
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.storage.sql_provider import SQLiteStorageProvider
 from openwpm.task_manager import TaskManager
-
+from sites import Sites
 # The list of sites that we wish to crawl
-NUM_BROWSERS = 1
-sites = [
-    # "http://www.example.com",
-    "http://www.princeton.edu",
-    # "http://citp.princeton.edu/",
-]
+NUM_BROWSERS = 10
 
+sites = Sites.SITES
 # Loads the default ManagerParams
 # and NUM_BROWSERS copies of the default BrowserParams
 

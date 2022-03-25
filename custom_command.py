@@ -8,6 +8,7 @@ Steps to have a custom command run as part of a CommandSequence
 4. Execute the CommandSequence
 
 """
+import csv
 import logging
 
 from selenium.webdriver import Firefox
@@ -36,8 +37,19 @@ class FormCountingCommand(BaseCommand):
         extension_socket: ClientSocket,
     ) -> None:
         forms = webdriver.find_elements_by_tag_name("form")
-        for form in forms:
-            print("form text: ", form.text, " ; form id: ", form.id)
+        with open('forms.csv', 'a', newline='') as csvfile:
+            for form in forms:
+                spamwriter = csv.writer(csvfile, delimiter=',')
+                form_text = form.text.replace('\n',' ')
+                if form_text == '':
+                    form_text = "NONE"
+                
+                form_id = form.get_attribute("id")
+                if form_id == '':
+                    form_id = "NONE"
+                
+                spamwriter.writerow([form_text, form_id, webdriver.current_url])
+                print("form text: ", form_text, " ; form id: ", form_id, " url: " + webdriver.current_url)
             
         # current_url = webdriver.current_url
         # link_count = len(webdriver.find_elements(By.TAG_NAME, "a"))

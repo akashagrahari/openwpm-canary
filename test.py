@@ -6,6 +6,7 @@ import domain_utils
 import csv 
 import xml.etree.ElementTree as ET
 
+
 with open("./scripts.json") as f:
     scripts = json.load(f)
 
@@ -18,12 +19,6 @@ test_script_urls = ["https://cm.g.doubleclick.net/pixel?google_nid=bluekai&googl
 script_urls = []
 
 
-sitemap = ET.parse('sitemap.xml')
-root = sitemap.getroot()
-print(root.findall('.//loc'))
-# pmcid = article.attrib.get('pmcid')
-# for loc in article.findall('url/loc'):
-#     print (loc)
 
     
 with open('scripts.csv', 'a', newline='') as csvfile:

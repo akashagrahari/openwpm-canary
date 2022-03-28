@@ -12,10 +12,22 @@ import time
 import json
 
 
+import xmltodict
 # The list of sites that we wish to crawl
 NUM_BROWSERS = 10
+SITES_XML_PATH = "sitemap.xml" 
 
-sites = Sites.SITES
+def get_sites():
+    pages = []
+    with open(SITES_XML_PATH) as xml_file:
+        data_dict = xmltodict.parse(xml_file.read())
+        urls = data_dict['urlset']['url']
+        for url in urls:
+            pages.append(url['loc'])
+    return pages
+
+sites = get_sites()
+print(sites)
 # Loads the default ManagerParams
 # and NUM_BROWSERS copies of the default BrowserParams
 
@@ -88,7 +100,7 @@ with TaskManager(
         # command_sequence.get()
         # command_sequence.browse(num_links=2, sleep=20, timeout=60)
         # Start by visiting the page
-        command_sequence.append_command(GetCommand(url=site, sleep=3), timeout=60)
+        command_sequence.append_command(GetCommand(url=site, sleep=0.5), timeout=60)
         # Have a look at custom_command.py to see how to implement your own command
         # command_sequence.append_command(LinkCountingCommand())
         formParser = FormParserCommand(site)

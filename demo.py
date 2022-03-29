@@ -13,21 +13,28 @@ import json
 
 
 import xmltodict
-# The list of sites that we wish to crawl
+from datetime import datetime
+import json
+
 NUM_BROWSERS = 10
 SITES_XML_PATH = "sitemap.xml" 
 
-def get_sites():
+def get_sites(path):
     pages = []
-    with open(SITES_XML_PATH) as xml_file:
+    with open(path) as xml_file:
         data_dict = xmltodict.parse(xml_file.read())
         urls = data_dict['urlset']['url']
         for url in urls:
-            pages.append(url['loc'])
+            pages.append(dict(url = url['loc'], dateDetected = datetime.now().strftime("%m_%d_%Y_%H:%M:%S"), status = "new"))
     return pages
 
-sites = get_sites()
-print(sites)
+# The list of sites that we wish to crawl
+sites = get_sites(SITES_XML_PATH)
+site_urls = [site['url'] for site in sites]
+print(site_urls)
+with open('pages.json_{date}'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
+        json.dump(sites, outfile, ensure_ascii=False, indent=4)
+
 # Loads the default ManagerParams
 # and NUM_BROWSERS copies of the default BrowserParams
 
@@ -84,7 +91,7 @@ with TaskManager(
     None,
 ) as manager:
     # Visits the sites
-    for index, site in enumerate(sites):
+    for index, site in enumerate(site_urls):
 
         def callback(success: bool, val: str = site) -> None:
             print(

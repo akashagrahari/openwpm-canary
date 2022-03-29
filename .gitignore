@@ -100,3 +100,6 @@ Extension/firefox/src/feature.js
 datadir
 scripts.csv
 sitemap.xml
+pages.json*
+scripts.json*
+scripts.csv

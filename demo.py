@@ -1,12 +1,17 @@
 from pathlib import Path
 
-from custom_command import FormCountingCommand, LinkCountingCommand
+from custom_command import FormParserCommand
 from openwpm.command_sequence import CommandSequence
 from openwpm.commands.browser_commands import GetCommand
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.storage.sql_provider import SQLiteStorageProvider
 from openwpm.task_manager import TaskManager
 from sites import Sites
+import sqlite3 as lite
+import time
+import json
+
+
 import xmltodict
 from datetime import datetime
 import json
@@ -62,6 +67,23 @@ manager_params.log_path = Path("./datadir/openwpm.log")
 
 
 # Commands time out by default after 60 seconds
+FORMS_DB_DIR = "./datadir/forms.sqlite"
+conn = lite.connect(FORMS_DB_DIR)
+cur = conn.cursor()
+cur.execute(''' CREATE TABLE IF NOT EXISTS forms
+  (
+     id   TEXT UNIQUE,
+     element_id  TEXT,
+     element_id_type TEXT,
+     element_tag    TEXT,
+     pages  TEXT
+  );''')
+
+cur.execute('''DELETE FROM forms;''')
+
+conn.commit()
+
+
 with TaskManager(
     manager_params,
     browser_params,
@@ -88,9 +110,18 @@ with TaskManager(
         command_sequence.append_command(GetCommand(url=site, sleep=0.5), timeout=60)
         # Have a look at custom_command.py to see how to implement your own command
         # command_sequence.append_command(LinkCountingCommand())
-        command_sequence.append_command(FormCountingCommand())
-
+        formParser = FormParserCommand(site)
+        command_sequence.append_command(formParser)
         # Run commands across all browsers (simple parallelization)
         manager.execute_command_sequence(command_sequence)
 
+output = []
+epoch_time = int(time.time())
+for id, element_id, element_id_type, element_tag, pages in cur.execute("SELECT * FROM forms;"):
+    pagesList = json.loads(pages)
+    for page in pagesList:
+        output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page})
+conn.close()
 
+with open('forms.json', 'w') as outfile:
+    json.dump(output, outfile)

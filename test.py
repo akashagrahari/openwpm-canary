@@ -7,6 +7,7 @@ import csv
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import xmltodict
+import time 
 
 DB_DIR = "./datadir/crawl-data.sqlite"
 SOURCE_DUMP_DIR = "./datadir/sources/"
@@ -28,7 +29,7 @@ for url, site_url in cur.execute("SELECT DISTINCT s.site_url, v.url FROM site_vi
     for company_data in scripts:
         company_domains = company_data["domains"]
         if (script_base_domain in company_domains) or ("*."+script_base_domain in company_domains):
-            scripts_dict.append(dict(scriptName=company_data["name"], scriptUrl = site_url, pageUrl = url, scriptBaseDomain=script_base_domain, scriptCategories=company_data["categories"], dateDetected = datetime.now().strftime("%m_%d_%Y"), status = "new"))
+            scripts_dict.append(dict(scriptName=company_data["name"], scriptUrl = site_url, pageUrl = url, scriptBaseDomain=script_base_domain, scriptCategories=company_data["categories"], dateDetected = int(time.time()), status = "new"))
             print("-----------------")
             print("Script Name: " + company_data["name"])
             print("Script Base Domain:" + script_base_domain)

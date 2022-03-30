@@ -25,7 +25,7 @@ def get_sites(path):
         data_dict = xmltodict.parse(xml_file.read())
         urls = data_dict['urlset']['url']
         for url in urls:
-            pages.append(dict(url = url['loc'], dateDetected = datetime.now().strftime("%m_%d_%Y_%H:%M:%S"), status = "new"))
+            pages.append(dict(url = url['loc'], dateDetected = int(time.time()), status = "new"))
     return pages
 
 # The list of sites that we wish to crawl

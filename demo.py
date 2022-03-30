@@ -70,16 +70,18 @@ manager_params.log_path = Path("./datadir/openwpm.log")
 FORMS_DB_DIR = "./datadir/forms.sqlite"
 conn = lite.connect(FORMS_DB_DIR)
 cur = conn.cursor()
+cur.execute('''DROP TABLE IF EXISTS forms;''')
 cur.execute(''' CREATE TABLE IF NOT EXISTS forms
   (
      id   TEXT UNIQUE,
      element_id  TEXT,
      element_id_type TEXT,
+     element_text   TEXT,
      element_tag    TEXT,
      pages  TEXT
   );''')
 
-cur.execute('''DELETE FROM forms;''')
+
 
 conn.commit()
 
@@ -117,11 +119,11 @@ with TaskManager(
 
 output = []
 epoch_time = int(time.time())
-for id, element_id, element_id_type, element_tag, pages in cur.execute("SELECT * FROM forms;"):
+for id, element_id, element_id_type, element_text, element_tag, pages in cur.execute("SELECT * FROM forms;"):
     pagesList = json.loads(pages)
     for page in pagesList:
-        output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page})
+        output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "formText": element_text, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page})
 conn.close()
 
-with open('forms.json', 'w') as outfile:
+with open('forms_{}.json'.format(epoch_time), 'w') as outfile:
     json.dump(output, outfile)

@@ -36,7 +36,7 @@ class FormParserCommand(BaseCommand):
     def __repr__(self) -> str:
         return "FormParserCommand"
 
-    def updateDB(self,conn, cur, db_id, element_id, element_id_type, element_tag):
+    def updateDB(self,conn, cur, db_id, element_id, element_id_type, element_text, element_tag):
         # print("element_id: ", element_id, " element_id_type: ", element_id_type, " element_tag: ", element_tag)
         alreadyExists = False
         try:
@@ -53,10 +53,10 @@ class FormParserCommand(BaseCommand):
             pass
         if not alreadyExists:
             pagesList = json.dumps([self.site])
-            cur.execute("INSERT INTO forms (id, element_id, element_id_type, element_tag, pages) VALUES (?,?,?,?,?);", (db_id, element_id, element_id_type, element_tag, pagesList))
+            cur.execute("INSERT INTO forms (id, element_id, element_id_type, element_text, element_tag, pages) VALUES (?,?,?,?,?,?);", (db_id, element_id, element_id_type, element_text, element_tag, pagesList))
         conn.commit()
 
-    def getElementIdentifier(self, element, element_tag):
+    def getElementIdentifierAndTag(self, element, element_tag):
         if element_tag == "form":
             if element.get_attribute("id") != "":
                 return element.get_attribute("id"), "id"
@@ -96,13 +96,17 @@ class FormParserCommand(BaseCommand):
                 parent_element = element.find_element_by_xpath("./ancestor::form")
             except NoSuchElementException:
                 self.logger.debug("No form found for input: %s", element.get_attribute("outerHTML"))
-            element_tag = "input"
+            element_tag = ""
             if parent_element != element:
                 element_tag = "form"
-            element_id, element_id_type = self.getElementIdentifier(parent_element, element_tag)
+                element_text = parent_element.text
+            else:
+                element_tag = "input"
+                element_text = element.get_attribute("placeholder") or element.text
+            element_id, element_id_type = self.getElementIdentifierAndTag(parent_element, element_tag)
             db_id = element_id + "|" + element_id_type + "|" + element_tag
             hashed_db_id = hashlib.sha1(db_id.encode("utf-8")).hexdigest()
-            self.updateDB(conn,cur, hashed_db_id, element_id, element_id_type, element_tag)
+            self.updateDB(conn,cur, hashed_db_id, element_id, element_id_type, element_text, element_tag)
 
         conn.close()
 

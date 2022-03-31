@@ -10,13 +10,12 @@ from sites import Sites
 import sqlite3 as lite
 import time
 import json
-
-
 import xmltodict
 from datetime import datetime
 import json
+import script_finder
 
-NUM_BROWSERS = 10
+NUM_BROWSERS = 3
 SITES_XML_PATH = "sitemap.xml" 
 
 def get_sites(path):
@@ -32,6 +31,7 @@ def get_sites(path):
 sites = get_sites(SITES_XML_PATH)
 site_urls = [site['url'] for site in sites]
 print(site_urls)
+print("Wrote site URLs to file")
 with open('pages.json_{date}'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
         json.dump(sites, outfile, ensure_ascii=False, indent=4)
 
@@ -50,6 +50,7 @@ for browser_param in browser_params:
     # Record Navigations
     browser_param.navigation_instrument = True
     # Record JS Web API calls
+
     browser_param.js_instrument = True
     # Record the callstack of all WebRequests made
     browser_param.callstack_instrument = True
@@ -73,6 +74,7 @@ cur = conn.cursor()
 cur.execute(''' CREATE TABLE IF NOT EXISTS forms
   (
      id   TEXT UNIQUE,
+
      element_id  TEXT,
      element_id_type TEXT,
      element_tag    TEXT,
@@ -120,8 +122,12 @@ epoch_time = int(time.time())
 for id, element_id, element_id_type, element_tag, pages in cur.execute("SELECT * FROM forms;"):
     pagesList = json.loads(pages)
     for page in pagesList:
+        print("form id: " + element_id + " form id type: " + element_id_type)
         output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page})
 conn.close()
 
-with open('forms.json', 'w') as outfile:
+with open('forms_{date}.json'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+') as outfile:
     json.dump(output, outfile)
+print("Wrote forms to file")
+
+script_finder.find_scripts()

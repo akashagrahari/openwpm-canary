@@ -124,7 +124,7 @@ epoch_time = int(time.time())
 for id, element_id, element_id_type, element_text, element_tag, pages in cur.execute("SELECT * FROM forms;"):
     pagesList = json.loads(pages)
     for page in pagesList:
-        output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "formText": element_text, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page})
+        output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "formText": element_text, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page, "status": "new"})
 conn.close()
 
 with open('forms_{}.json'.format(epoch_time), 'w') as outfile:

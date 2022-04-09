@@ -48,35 +48,66 @@ class FormParserCommand(BaseCommand):
                     newPages = json.dumps(pagesList)
                     # print("newPages: ", newPages, " db_id: ", db_id)
                     cur.execute("UPDATE forms SET pages=? WHERE id=?",(newPages, db_id))
+                    print("added page to form: with id: " + str(element_id))
                     break
         except lite.OperationalError:
             pass
         if not alreadyExists:
             pagesList = json.dumps([self.site])
             cur.execute("INSERT INTO forms (id, element_id, element_id_type, element_text, element_tag, pages) VALUES (?,?,?,?,?,?);", (db_id, element_id, element_id_type, element_text, element_tag, pagesList))
+            print("inserted new form: " + str(element_id))
         conn.commit()
 
+    def get_input_text(self, input_element):
+        return input_element.get_attribute("placeholder") or input_element.text
+    
+    def get_form_text(self, form_element):
+        element_text = ''
+        inputs = form_element.find_elements_by_tag_name("input")
+        for input in inputs:
+            element_text += "\n" + self.get_input_text(input)
+        element_text = element_text.strip()
+        if element_text == '':
+            print("empty element text. Fallback to form.text")
+            element_text = form_element.text
+        return element_text
+    
+    def get_form_id_and_tag(self, form_element):
+        if form_element.get_attribute("id") != "":
+            return form_element.get_attribute("id"), "id"
+        else: 
+            inputs = form_element.find_elements_by_tag_name("input")
+            element_id = ''
+            for input in inputs:
+                input_id_and_tag = self.get_input_id_and_tag(input)
+                id = input_id_and_tag[0]
+                tag = input_id_and_tag[1]
+                if tag == "id" or tag == "name":
+                    element_id += "," + id
+            element_id = element_id.strip(',')
+            if element_id == '':
+                return "", "not_found"
+            return element_id, "input_ids"
+    
+    def get_input_id_and_tag(self, input_element):
+            if input_element.get_attribute("id") != "":
+                return input_element.get_attribute("id"), "id"
+            elif input_element.get_attribute("name") != "":
+                return input_element.get_attribute("name"), "name"
+            elif input_element.get_attribute("placeholder") != "":
+                return input_element.get_attribute("placeholder"), "placeholder"
+            elif input_element.text != "":
+                return input_element.text, "text"
+    
     def getElementIdentifierAndTag(self, element, element_tag):
         if element_tag == "form":
-            if element.get_attribute("id") != "":
-                return element.get_attribute("id"), "id"
-            elif element.get_attribute("action") != "":
-                return element.get_attribute("action"), "action"
-            elif element.text != "":
-                return element.text, "text"
-            else:
-                return "", "not_found"
+           return self.get_form_id_and_tag(element)
+            # elif element.get_attribute("action") != "":
+            #     return element.get_attribute("action"), "action"
         elif element_tag == "input":
-            if element.get_attribute("id") != "":
-                return element.get_attribute("id"), "id"
-            elif element.get_attribute("placeholder") != "":
-                return element.get_attribute("placeholder"), "placeholder"
-            elif element.text != "":
-                return element.text, "text"
-            elif element.get_attribute("name") != "":
-                return element.get_attribute("name"), "name"
-            else:
-                return "", "not_found"
+            return self.get_input_id_and_tag(element)
+        else:
+            return "", "not_found"
     # Have a look at openwpm.commands.types.BaseCommand.execute to see
     # an explanation of each parameter
     def execute(
@@ -93,17 +124,43 @@ class FormParserCommand(BaseCommand):
             # if element.get_attribute("id") == "Textbox-1":
             parent_element = element
             try:
+                print("---------------------------")
                 parent_element = element.find_element_by_xpath("./ancestor::form")
+                print("Found ancestor::form")
+                print(parent_element.tag_name)
+                print(parent_element.text)
+                print("href: ")
+                print(parent_element.get_attribute("href"))
             except NoSuchElementException:
+                print("Didn't Find ancestor::form")
+                print(parent_element.tag_name)
+                print(parent_element.text)
+                print("href: ")
+                print(parent_element.get_attribute("href"))
                 self.logger.debug("No form found for input: %s", element.get_attribute("outerHTML"))
             element_tag = ""
             if parent_element != element:
                 element_tag = "form"
-                element_text = parent_element.text
+                # element_text = parent_element.text
+                element_text = self.get_form_text(parent_element)
+                
             else:
                 element_tag = "input"
-                element_text = element.get_attribute("placeholder") or element.text
+                element_text = self.get_input_text(element)
             element_id, element_id_type = self.getElementIdentifierAndTag(parent_element, element_tag)
+            if element_id == '' or element_id == None:
+                print("element id not found, trying with the input element...")
+                print("element")
+                print(element)
+                print("parent_element")
+                print(parent_element)
+                element_id, element_id_type = self.getElementIdentifierAndTag(element, element_tag)
+            print("form_input id")
+            print(element_id)
+            print(element_id_type)
+            print("element_text")
+            print(element_text)
+            print("---------------------------")
             db_id = element_id + "|" + element_id_type + "|" + element_tag
             hashed_db_id = hashlib.sha1(db_id.encode("utf-8")).hexdigest()
             self.updateDB(conn,cur, hashed_db_id, element_id, element_id_type, element_text, element_tag)

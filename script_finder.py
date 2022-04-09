@@ -40,7 +40,4 @@ def find_scripts():
                 print("-----------------")
     with open('scripts.json_{date}'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
             json.dump(scripts_dict, outfile, ensure_ascii=False, indent=4)
-            
-    
-
-   
+    print("Dumped scripts to file")

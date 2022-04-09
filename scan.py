@@ -15,7 +15,7 @@ from datetime import datetime
 import json
 import script_finder
 
-NUM_BROWSERS = 3
+NUM_BROWSERS = 10
 SITES_XML_PATH = "sitemap.xml" 
 
 def get_sites(path):
@@ -67,7 +67,7 @@ manager_params.log_path = Path("./datadir/openwpm.log")
 # manager_params.process_watchdog = True
 
 
-# Commands time out by default after 60 seconds
+# # Commands time out by default after 60 seconds
 FORMS_DB_DIR = "./datadir/forms.sqlite"
 conn = lite.connect(FORMS_DB_DIR)
 cur = conn.cursor()
@@ -95,8 +95,9 @@ with TaskManager(
     None,
 ) as manager:
     # Visits the sites
+    count = site_urls
     for index, site in enumerate(site_urls):
-
+        print("scanning site - ")
         def callback(success: bool, val: str = site) -> None:
             print(
                 f"CommandSequence for {val} ran {'successfully' if success else 'unsuccessfully'}"
@@ -124,11 +125,13 @@ epoch_time = int(time.time())
 for id, element_id, element_id_type, element_text, element_tag, pages in cur.execute("SELECT * FROM forms;"):
     pagesList = json.loads(pages)
     for page in pagesList:
+        print("Appending form to file. Form ID: " + str(element_id))
         output.append({"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "formText": element_text, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page, "status": "new"})
 conn.close()
 
 with open('forms_{}.json'.format(epoch_time), 'w') as outfile:
     json.dump(output, outfile)
-print("Wrote forms to file")
+print("Dumped forms to file")
 
 script_finder.find_scripts()
+

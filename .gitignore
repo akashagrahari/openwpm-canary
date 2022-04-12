@@ -103,3 +103,10 @@ sitemap.xml
 pages.json*
 scripts.json*
 scripts.csv
+error_sites*
+log.txt
+sitemap*
+demo_*
+payload_*
+forms_*
+

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from custom_command import FormParserCommand
+from custom_command import FormParserCommand, AllowCookiesCommand
 from openwpm.command_sequence import CommandSequence
 from openwpm.commands.browser_commands import GetCommand
 from openwpm.config import BrowserParams, ManagerParams
@@ -87,7 +87,7 @@ cur.execute(''' CREATE TABLE IF NOT EXISTS forms
 
 conn.commit()
 
-
+error_sites = [] 
 with TaskManager(
     manager_params,
     browser_params,
@@ -95,14 +95,16 @@ with TaskManager(
     None,
 ) as manager:
     # Visits the sites
-    count = site_urls
+    count = 0
     for index, site in enumerate(site_urls):
-        print("scanning site - ")
+        print("-----------------scanning site - " +str(count) + " /" + str(len(site_urls)) + "--" + site)
+        count+=1
         def callback(success: bool, val: str = site) -> None:
             print(
                 f"CommandSequence for {val} ran {'successfully' if success else 'unsuccessfully'}"
             )
-
+            if not success:
+                error_sites.append(site)
         # Parallelize sites over all number of browsers set above.
         command_sequence = CommandSequence(
             site,
@@ -112,13 +114,22 @@ with TaskManager(
         # command_sequence.get()
         # command_sequence.browse(num_links=2, sleep=20, timeout=60)
         # Start by visiting the page
-        command_sequence.append_command(GetCommand(url=site, sleep=0.5), timeout=60)
+
+
+        command_sequence.append_command(GetCommand(url=site, sleep=5), timeout=60)
+        
+        allowCookiesCommand = AllowCookiesCommand()
+        command_sequence.append_command(allowCookiesCommand, timeout=10)
+
         # Have a look at custom_command.py to see how to implement your own command
         # command_sequence.append_command(LinkCountingCommand())
-        formParser = FormParserCommand(site)
-        command_sequence.append_command(formParser)
+        # formParser = FormParserCommand(site)
+        # command_sequence.append_command(formParser, timeout=60)
+
+        
         # Run commands across all browsers (simple parallelization)
         manager.execute_command_sequence(command_sequence)
+        # print("-----------------finished scanning site - " + site)
 
 output = []
 epoch_time = int(time.time())
@@ -135,3 +146,8 @@ print("Dumped forms to file")
 
 script_finder.find_scripts()
 
+print("error sites")
+print(error_sites)
+
+with open('error_sites_{}.json'.format(epoch_time), 'w') as outfile:
+    json.dump(error_sites, outfile)

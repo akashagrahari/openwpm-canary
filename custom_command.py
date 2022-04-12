@@ -48,7 +48,7 @@ class FormParserCommand(BaseCommand):
                     newPages = json.dumps(pagesList)
                     # print("newPages: ", newPages, " db_id: ", db_id)
                     cur.execute("UPDATE forms SET pages=? WHERE id=?",(newPages, db_id))
-                    print("added page to form: with id: " + str(element_id))
+                    # print("added page to form: with id: " + str(element_id))
                     break
         except lite.OperationalError:
             pass
@@ -124,19 +124,19 @@ class FormParserCommand(BaseCommand):
             # if element.get_attribute("id") == "Textbox-1":
             parent_element = element
             try:
-                print("---------------------------")
+                # print("---------------------------")
                 parent_element = element.find_element_by_xpath("./ancestor::form")
-                print("Found ancestor::form")
-                print(parent_element.tag_name)
-                print(parent_element.text)
-                print("href: ")
-                print(parent_element.get_attribute("href"))
+                # print("Found ancestor::form")
+                # print(parent_element.tag_name)
+                # print(parent_element.text)
+                # print("href: ")
+                # print(parent_element.get_attribute("href"))
             except NoSuchElementException:
-                print("Didn't Find ancestor::form")
-                print(parent_element.tag_name)
-                print(parent_element.text)
-                print("href: ")
-                print(parent_element.get_attribute("href"))
+                # print("Didn't Find ancestor::form")
+                # print(parent_element.tag_name)
+                # print(parent_element.text)
+                # print("href: ")
+                # print(parent_element.get_attribute("href"))
                 self.logger.debug("No form found for input: %s", element.get_attribute("outerHTML"))
             element_tag = ""
             if parent_element != element:
@@ -149,18 +149,18 @@ class FormParserCommand(BaseCommand):
                 element_text = self.get_input_text(element)
             element_id, element_id_type = self.getElementIdentifierAndTag(parent_element, element_tag)
             if element_id == '' or element_id == None:
-                print("element id not found, trying with the input element...")
-                print("element")
-                print(element)
-                print("parent_element")
-                print(parent_element)
+                # print("element id not found, trying with the input element...")
+                # print("element")
+                # print(element)
+                # print("parent_element")
+                # print(parent_element)
                 element_id, element_id_type = self.getElementIdentifierAndTag(element, element_tag)
-            print("form_input id")
-            print(element_id)
-            print(element_id_type)
-            print("element_text")
-            print(element_text)
-            print("---------------------------")
+            # print("form_input id")
+            # print(element_id)
+            # print(element_id_type)
+            # print("element_text")
+            # print(element_text)
+            # print("---------------------------")
             db_id = element_id + "|" + element_id_type + "|" + element_tag
             hashed_db_id = hashlib.sha1(db_id.encode("utf-8")).hexdigest()
             self.updateDB(conn,cur, hashed_db_id, element_id, element_id_type, element_text, element_tag)
@@ -193,3 +193,30 @@ class LinkCountingCommand(BaseCommand):
         print(webdriver.find_element(By.TAG_NAME, "a"))
         print(webdriver.find_element(By.TAG_NAME, "a").text)
         print(webdriver.find_element(By.TAG_NAME, "a").size)
+
+
+class AllowCookiesCommand(BaseCommand):
+    def __init__(self) -> None:
+        self.logger = logging.getLogger("openwpm")
+
+    # While this is not strictly necessary, we use the repr of a command for logging
+    # So not having a proper repr will make your logs a lot less useful
+    def __repr__(self) -> str:
+        return "AllowCookiesCommand"
+    
+    def execute(
+        self,
+        webdriver: Firefox,
+        browser_params: BrowserParams,
+        manager_params: ManagerParams,
+        extension_socket: ClientSocket,
+        ) -> None:
+            ot_allow_cookies_script = "OneTrust.AllowAll()"
+            try:
+                print("running script")
+                webdriver.execute_script(ot_allow_cookies_script);
+            except Exception as e:
+                print("error in running script")
+                print(str(e))
+            print("ran OT script")
+

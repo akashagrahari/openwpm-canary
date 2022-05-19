@@ -25,19 +25,25 @@ def find_scripts():
         scripts = json.load(f)
 
     for url, site_url in cur.execute("SELECT DISTINCT s.site_url, v.url FROM site_visits s JOIN http_requests as v ON s.visit_id = v.visit_id ORDER BY s.site_url;"):  
+        
         subparts = domain_utils.hostname_subparts(site_url)
+        if len(subparts) == 0:
+            print("the following site_url is non parsable") # TODO: Check that. example - https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/textFit.js
+            print(site_url)
+            continue
         script_base_domain = subparts[len(subparts)-1]
         for company_data in scripts:
             company_domains = company_data["domains"]
             if (script_base_domain in company_domains) or ("*."+script_base_domain in company_domains):
                 scripts_dict.append(dict(scriptName=company_data["name"], scriptUrl = site_url, pageUrl = url, scriptBaseDomain=script_base_domain, scriptCategories=company_data["categories"], dateDetected = int(time.time()), status = "new"))
-                print("-----------------")
-                print("Script Name: " + company_data["name"])
-                print("Script Base Domain:" + script_base_domain)
-                print("Full Script URL: " + site_url)
-                print("Script Categories: " + ','.join(company_data["categories"]))
-                print("Found In URL: " + url)
-                print("-----------------")
+                # print("-----------------")
+                # print("Script Name: " + company_data["name"])
+                # print("Script Base Domain:" + script_base_domain)
+                # print("Full Script URL: " + site_url)
+                # print("Script Categories: " + ','.join(company_data["categories"]))
+                # print("Found In URL: " + url)
+                # print("-----------------")
     with open('scripts.json_{date}'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
             json.dump(scripts_dict, outfile, ensure_ascii=False, indent=4)
     print("Dumped scripts to file")
+    return scripts_dict

@@ -98,6 +98,9 @@ class FormParserCommand(BaseCommand):
                 return input_element.get_attribute("placeholder"), "placeholder"
             elif input_element.text != "":
                 return input_element.text, "text"
+            else:
+                print("no id and tag found")
+                return '',''
     
     def getElementIdentifierAndTag(self, element, element_tag):
         if element_tag == "form":
@@ -120,11 +123,14 @@ class FormParserCommand(BaseCommand):
         conn = lite.connect(FORMS_DB_DIR)
         cur = conn.cursor()
         inputs = webdriver.find_elements_by_tag_name("input")
+        # print("in FORM execute")
+        # print("inputs")
+        # print(inputs)
         for element in inputs:
             # if element.get_attribute("id") == "Textbox-1":
             parent_element = element
             try:
-                # print("---------------------------")
+                print("---------------------------")
                 parent_element = element.find_element_by_xpath("./ancestor::form")
                 # print("Found ancestor::form")
                 # print(parent_element.tag_name)
@@ -212,6 +218,7 @@ class AllowCookiesCommand(BaseCommand):
         extension_socket: ClientSocket,
         ) -> None:
             ot_allow_cookies_script = "OneTrust.AllowAll()"
+            # ot_allow_cookies_script = "console.log('x')"
             try:
                 print("running script")
                 webdriver.execute_script(ot_allow_cookies_script);

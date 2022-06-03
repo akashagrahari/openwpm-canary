@@ -1,3 +1,4 @@
+from email import utils
 from re import S
 import sys
 from pathlib import Path
@@ -15,28 +16,18 @@ import script_finder
 import all_cookies_finder
 from datetime import datetime
 import argparse
+import cookie_enhancer
+import utils
+import argument_parser
 
-NUM_BROWSERS = 10
+NUM_BROWSERS = 5
 
-parser = argparse.ArgumentParser(description='Scan and analyse')
-parser.add_argument('--scan', type=bool, required=True, help='scan the provided urls', action=argparse.BooleanOptionalAction)
-parser.add_argument('--analyse', type=bool, required=True, help='analyse the results and save to file', action=argparse.BooleanOptionalAction)
-parser.add_argument('--pages', type=bool, required=True, help='fetch pages from urls', action=argparse.BooleanOptionalAction)
-parser.add_argument('--forms', type=bool, required=True, help='fetch forms from urls', action=argparse.BooleanOptionalAction)
-parser.add_argument('--scripts', type=bool, required=True, help='fetch scripts from urls', action=argparse.BooleanOptionalAction)
-parser.add_argument('--all_cookies', type=bool, required=True, help='fetch all cookies from urls', action=argparse.BooleanOptionalAction)
-parser.add_argument('--allow_ot_cookies', type=bool, required=True, help='Allow cookies for OneTrust banners', action=argparse.BooleanOptionalAction)
-args = parser.parse_args()
+print("before get_args")
+args = argument_parser.get_args()
+print("after get_args")
 
 SCAN = args.scan
 ANALYSE = args.analyse
-print("SCAN = " + str(SCAN))
-print("ANALYSE = " + str(ANALYSE))
-print("pages = " + str(args.pages))
-print("forms = " + str(args.forms))
-print("scripts = " + str(args.scripts))
-print("all_cookies = " + str(args.all_cookies))
-print("allow_ot_cookies = " + str(args.allow_ot_cookies))
 # Loads the default ManagerParams
 # and NUM_BROWSERS copies of the default BrowserParams
 
@@ -73,8 +64,9 @@ conn = lite.connect(FORMS_DB_DIR)
 cur = conn.cursor()
 
 error_sites = []
-site_urls = get_site_urls()
-
+print("before getting site urls")
+site_urls = get_site_urls(page_limit=args.page_limit, sitemap_filename = args.sitemap_filename)
+print("site urls length : " + str(len(site_urls)))
 if SCAN == True:
     # # Commands time out by default after 60 seconds
     if args.forms:
@@ -136,14 +128,21 @@ if SCAN == True:
             manager.execute_command_sequence(command_sequence)
             # print("-----------------finished scanning site - " + site)
 
-if ANALYSE:
+epoch_time = int(time.time())
+print("error sites")
+print(error_sites)
+
+with open('error_sites_{}.json'.format(epoch_time), 'w') as outfile:
+    json.dump(error_sites, outfile)
+
+if ANALYSE == True:
+    domain_name = site_urls[0].removeprefix("https://").removesuffix("/")
     print("analysing data")
     if args.pages:
-        sites = save_pages()
+        sites = save_pages(page_limit=args.page_limit, sitemap_filename=args.sitemap_filename)
     if args.forms:
         print("analysing forms...")
         forms_output = []
-        epoch_time = int(time.time())
         for id, element_id, element_id_type, element_text, element_tag, pages in cur.execute("SELECT * FROM forms;"):
             pagesList = json.loads(pages)
             for page in pagesList:
@@ -163,18 +162,16 @@ if ANALYSE:
     if args.all_cookies:
         print("analysing all cookies...")
         all_cookies = all_cookies_finder.find_all_cookies()
+        enhanced_cookies, unknown_cookies = cookie_enhancer.get_enhanced_and_unknown_cookies(all_cookies)
+        utils.write_json_to_file(unknown_cookies, domain_name, "unknown_cookies")
 
-    print("error sites")
-    print(error_sites)
-
-    with open('error_sites_{}.json'.format(epoch_time), 'w') as outfile:
-        json.dump(error_sites, outfile)
+    
 
     print("building full payload...")
     with open('payload_empty.json') as f:
         full_site_payload = json.load(f)
         domainData = full_site_payload["domains"][0]
-        domainData["domainName"] = site_urls[0].removeprefix("https://").removesuffix("/")
+        domainData["domainName"] = domain_name
         if args.pages: 
                 domainData["tests"]["changeDetection"]["pages"] = sites
         
@@ -185,8 +182,8 @@ if ANALYSE:
             domainData["tests"]["changeDetection"]["scripts"] = scripts
         
         if args.all_cookies:
-            domainData["tests"]["changeDetection"]["cookies"] = all_cookies
+            domainData["tests"]["changeDetection"]["cookies"] = enhanced_cookies
         
-        with open('{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
+        with open('./payloads/{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
                 json.dump(full_site_payload, outfile, ensure_ascii=False, indent=4)
                 print("Dumped full paylaod to file for: "  + domainData["domainName"])

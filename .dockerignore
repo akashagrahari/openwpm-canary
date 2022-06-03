@@ -20,9 +20,14 @@ venv
 # npm packages
 Extension/firefox/node_modules
 Extension/webext-instrumentation/node_modules
+Extension/webext-instrumentation/build
 
 # built extension artifacts
 Extension/firefox/dist
 Extension/firefox/openwpm.xpi
 Extension/firefox/src/content.js
 Extension/firefox/src/feature.js
+datadir/sources
+datadir/screenshots
+datadir/openwpm.log
+payloads

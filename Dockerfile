@@ -31,5 +31,8 @@ ENV PATH $HOME/miniconda/envs/openwpm/bin:$PATH
 RUN mv firefox-bin /opt/firefox-bin
 ENV FIREFOX_BINARY /opt/firefox-bin/firefox-bin
 
+# Install Canary's dependencies  
+RUN pip install -r requirements.txt
+
 # Setting demo.py as the default command
-CMD [ "python", "demo.py"]
+CMD ["bash"]

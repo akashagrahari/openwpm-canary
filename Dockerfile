@@ -34,5 +34,7 @@ ENV FIREFOX_BINARY /opt/firefox-bin/firefox-bin
 # Install Canary's dependencies  
 RUN pip install -r requirements.txt
 
+RUN mkdir payloads
+
 # Setting demo.py as the default command
 CMD ["bash"]

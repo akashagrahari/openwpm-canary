@@ -30,4 +30,4 @@ Extension/firefox/src/feature.js
 datadir/sources
 datadir/screenshots
 datadir/openwpm.log
-payloads
+canary/output

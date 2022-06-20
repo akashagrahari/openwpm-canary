@@ -1,26 +1,23 @@
 from email import utils
 from re import S
-import sys
+from datetime import datetime
 from pathlib import Path
-from custom_command import FormParserCommand, AllowCookiesCommand
+import sqlite3 as lite
+import time
+import json
 from openwpm.command_sequence import CommandSequence
 from openwpm.commands.browser_commands import GetCommand
 from openwpm.config import BrowserParams, ManagerParams
 from openwpm.storage.sql_provider import SQLiteStorageProvider
 from openwpm.task_manager import TaskManager
-import sqlite3 as lite
-import time
-import json
-from pages_finder import get_site_urls, save_pages
-import script_finder
-import all_cookies_finder
-from datetime import datetime
-import argparse
-import cookie_enhancer
-import utils
-import argument_parser
+from canary.src.custom_commands.custom_commands import FormParserCommand, AllowCookiesCommand
+from canary.src.pages_finder.pages_finder import get_site_urls, save_pages
+import canary.src.script_finder.script_finder as script_finder
+import canary.src.all_cookies_finder.all_cookies_finder as all_cookies_finder
+import canary.src.cookie_enhancer.cookie_enhancer as cookie_enhancer
+import canary.src.utils.utils as utils
+import canary.src.utils.argument_parser as argument_parser
 
-NUM_BROWSERS = 5
 
 print("before get_args")
 args = argument_parser.get_args()
@@ -28,6 +25,7 @@ print("after get_args")
 
 SCAN = args.scan
 ANALYSE = args.analyse
+NUM_BROWSERS = args.num_browsers or 5
 # Loads the default ManagerParams
 # and NUM_BROWSERS copies of the default BrowserParams
 
@@ -132,7 +130,7 @@ epoch_time = int(time.time())
 print("error sites")
 print(error_sites)
 
-with open('error_sites_{}.json'.format(epoch_time), 'w') as outfile:
+with open('canary/output/error_sites/error_sites_{}.json'.format(epoch_time), 'w') as outfile:
     json.dump(error_sites, outfile)
 
 if ANALYSE == True:
@@ -151,7 +149,7 @@ if ANALYSE == True:
                 forms_output.append(formData)
         conn.close()
 
-        with open('forms_{}.json'.format(epoch_time), 'w') as outfile:
+        with open('./canary/output/forms/forms_{}.json'.format(epoch_time), 'w') as outfile:
             json.dump(forms_output, outfile)
         print("Dumped forms to file")
 
@@ -163,12 +161,10 @@ if ANALYSE == True:
         print("analysing all cookies...")
         all_cookies = all_cookies_finder.find_all_cookies()
         enhanced_cookies, unknown_cookies = cookie_enhancer.get_enhanced_and_unknown_cookies(all_cookies)
-        utils.write_json_to_file(unknown_cookies, domain_name, "unknown_cookies")
-
-    
+        utils.write_json_to_file(unknown_cookies, domain_name, "unknown_cookies", folder="unknown_cookies")
 
     print("building full payload...")
-    with open('payload_empty.json') as f:
+    with open('canary/templates/payload_empty.json') as f:
         full_site_payload = json.load(f)
         domainData = full_site_payload["domains"][0]
         domainData["domainName"] = domain_name
@@ -184,6 +180,6 @@ if ANALYSE == True:
         if args.all_cookies:
             domainData["tests"]["changeDetection"]["cookies"] = enhanced_cookies
         
-        with open('./payloads/{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
+        with open('./canary/output/payloads/{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
                 json.dump(full_site_payload, outfile, ensure_ascii=False, indent=4)
                 print("Dumped full paylaod to file for: "  + domainData["domainName"])

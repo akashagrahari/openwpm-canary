@@ -36,5 +36,5 @@ RUN pip install -r requirements.txt
 
 RUN mkdir payloads
 
-# Setting demo.py as the default command
-CMD ["bash"]
+# Setting scan.py as the default command
+CMD ["python3 scan.py --no-scan --no-analyse --pages --forms --scripts --all_cookies --allow_ot_cookies --page_limit 0 --sitemap_filename sitemap_talia"]

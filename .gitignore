@@ -98,12 +98,9 @@ Extension/firefox/src/content.js
 Extension/firefox/src/feature.js
 
 datadir
-scripts.csv
 sitemap.xml
-pages.json*
-scripts.json*
-scripts.csv
-error_sites*
+canary/output/*
+canary/sitemaps/*
 log.txt
 sitemap*
 demo_*
@@ -112,5 +109,3 @@ forms_*
 www.*
 merged_*
 all_cookies*
-payloads/*
-

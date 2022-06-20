@@ -1,6 +1,6 @@
-rm forms_*;
-rm pages.json*;
-rm scripts.json_*;
+rm canary/forms/forms_*;
+# rm canary/pages.json*;
+rm canary/scripts.json_*;
 echo "Deleted forms, scripts and pages old files"
 rm log.txt;
 echo "Deleted log file";

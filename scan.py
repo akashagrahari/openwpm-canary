@@ -18,7 +18,6 @@ import canary.src.cookie_enhancer.cookie_enhancer as cookie_enhancer
 import canary.src.utils.utils as utils
 import canary.src.utils.argument_parser as argument_parser
 
-
 print("before get_args")
 args = argument_parser.get_args()
 print("after get_args")
@@ -47,6 +46,7 @@ for browser_param in browser_params:
     browser_param.callstack_instrument = True
     # Record DNS resolution
     browser_param.dns_instrument = True
+    # browser_param.profile_archive_dir = Path("./datadir/")
 
 # Update TaskManager configuration (use this for crawl-wide settings)
 manager_params.data_directory = Path("./datadir/")
@@ -57,13 +57,21 @@ manager_params.failure_limit = 10000000000000
 # manager_params.memory_watchdog = True
 # manager_params.process_watchdog = True
 
+CANARY_BASE_PATH = "./canary/"
+SITEMAP_FOLDER_PATH = CANARY_BASE_PATH + "sitemaps/"
 FORMS_DB_DIR = "./datadir/forms.sqlite"
 conn = lite.connect(FORMS_DB_DIR)
 cur = conn.cursor()
 
 error_sites = []
 print("before getting site urls")
-site_urls = get_site_urls(page_limit=args.page_limit, sitemap_filename = args.sitemap_filename)
+if args.sitemap_filename:
+    sitemap_path = SITEMAP_FOLDER_PATH + args.sitemap_filename
+else:
+    print("no sitemap param provided, downloading from s3")
+    sitemap_path = utils.download_sitemap_from_s3()
+
+site_urls = get_site_urls(page_limit=args.page_limit, sitemap_path = sitemap_path)
 print("site urls length : " + str(len(site_urls)))
 if SCAN == True:
     # # Commands time out by default after 60 seconds
@@ -104,6 +112,7 @@ if SCAN == True:
                 site,
                 site_rank=index,
                 callback=callback,
+                reset=True
             )
             # command_sequence.get()
             # command_sequence.browse(num_links=2, sleep=20, timeout=60)
@@ -137,14 +146,13 @@ if ANALYSE == True:
     domain_name = site_urls[0].removeprefix("https://").removesuffix("/")
     print("analysing data")
     if args.pages:
-        sites = save_pages(page_limit=args.page_limit, sitemap_filename=args.sitemap_filename)
+        sites = save_pages(page_limit=args.page_limit, sitemap_path = sitemap_path)
     if args.forms:
         print("analysing forms...")
         forms_output = []
         for id, element_id, element_id_type, element_text, element_tag, pages in cur.execute("SELECT * FROM forms;"):
             pagesList = json.loads(pages)
             for page in pagesList:
-                print("Appending form to file. Form ID: " + str(element_id))
                 formData = {"formID": element_id, "formIDType": element_id_type, "formIDTag": element_tag, "formText": element_text, "dateDetected": epoch_time, "privacyPolicyExists": False, "url": page, "status": "new"}
                 forms_output.append(formData)
         conn.close()

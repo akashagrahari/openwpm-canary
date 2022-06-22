@@ -5,6 +5,7 @@ import time
 import json
 from .site_list import Sites
 import sys, os
+import canary.src.utils.utils as utils
 
 def get_sites_urls_from_sitemap(path):
     with open(path) as xml_file:
@@ -37,13 +38,16 @@ def get_site_urls(page_limit = 0, sitemap_path = ''):
         site_urls = site_urls[0:page_limit]
     return site_urls
 
-def save_pages(page_limit = 0, sitemap_path = ''):
+def save_pages(page_limit = 0, sitemap_path = '', domain=''):
     # The list of sites that we wish to crawl
     sites = get_sites(sitemap_path=sitemap_path)
     if page_limit > 0 :
         sites = sites[0:page_limit]
-    with open('./canary/output/pages/pages.json_{date}'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
+    file_name = 'scanned_pages_{domain}_{date}.json'.format(date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S"), domain = domain)
+    file_path = './canary/output/pages/' + file_name
+    with open(file_path, 'w+', encoding='utf-8') as outfile:
             json.dump(sites, outfile, ensure_ascii=False, indent=4)
+    utils.upload_file_to_s3("canary-scanned-pages", file_path, file_name)
     print("Wrote site URLs to file")
     return sites
 

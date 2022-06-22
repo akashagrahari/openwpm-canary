@@ -2,9 +2,11 @@ FROM 711048114373.dkr.ecr.us-east-1.amazonaws.com/canary-scanner-base:latest
 
 COPY canary/src canary/src
 COPY canary/templates canary/templates
+COPY scan.py .
 
 # Install Canary's dependencies  
 RUN pip install -r requirements.txt
+
 RUN mkdir canary/output
 RUN mkdir canary/output/payloads
 RUN mkdir canary/output/pages
@@ -12,6 +14,7 @@ RUN mkdir canary/output/forms
 RUN mkdir canary/output/scripts
 RUN mkdir canary/output/unknown_cookies
 RUN mkdir canary/output/error_sites
+RUN pip install boto3
 
 # Setting scan.py as the default command
-CMD python3 scan.py --scan --analyse --pages --forms --scripts --all_cookies --allow_ot_cookies --page_limit 0 --num_browsers 5
+CMD ./setup.sh ; python3 scan.py --scan --analyse --pages --forms --scripts --all_cookies --allow_ot_cookies --page_limit 50 --num_browsers 5

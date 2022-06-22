@@ -112,7 +112,7 @@ if SCAN == True:
                 site,
                 site_rank=index,
                 callback=callback,
-                reset=True
+                reset=False
             )
             # command_sequence.get()
             # command_sequence.browse(num_links=2, sleep=20, timeout=60)
@@ -139,14 +139,14 @@ epoch_time = int(time.time())
 print("error sites")
 print(error_sites)
 
-with open('canary/output/error_sites/error_sites_{}.json'.format(epoch_time), 'w') as outfile:
+domain_name = site_urls[0].removeprefix("https://").removesuffix("/")
+with open('canary/output/error_sites/error_sites_{domain}_{date}.json'.format(domain = domain_name, date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w') as outfile:
     json.dump(error_sites, outfile)
 
 if ANALYSE == True:
-    domain_name = site_urls[0].removeprefix("https://").removesuffix("/")
     print("analysing data")
     if args.pages:
-        sites = save_pages(page_limit=args.page_limit, sitemap_path = sitemap_path)
+        sites = save_pages(page_limit = args.page_limit, sitemap_path = sitemap_path, domain = domain_name)
     if args.forms:
         print("analysing forms...")
         forms_output = []
@@ -187,7 +187,12 @@ if ANALYSE == True:
         
         if args.all_cookies:
             domainData["tests"]["changeDetection"]["cookies"] = enhanced_cookies
-        
-        with open('./canary/output/payloads/{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S")), 'w+', encoding='utf-8') as outfile:
+            print("enhanced cookies length: " + str(len(enhanced_cookies)))
+                
+        file_path = './canary/output/payloads/{domain_name}_{date}.json'.format(domain_name = domainData["domainName"], date = datetime.now().strftime("%m_%d_%Y_%H:%M:%S"))
+        with open(file_path, 'w+', encoding='utf-8') as outfile:
                 json.dump(full_site_payload, outfile, ensure_ascii=False, indent=4)
                 print("Dumped full paylaod to file for: "  + domainData["domainName"])
+        print("uploading payload to s3")
+        utils.write_payload_to_s3(json.dumps(full_site_payload, ensure_ascii=False, indent=4).encode('UTF-8'), domainData["domainName"])
+        # utils.upload_file_to_s3("canary-payloads", file_path, domainData["domainName"] + '.json')

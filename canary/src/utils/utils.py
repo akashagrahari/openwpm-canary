@@ -19,7 +19,7 @@ def get_sitemap_string_from_s3():
 
 def download_sitemap_from_s3():
     BUCKET_NAME_STRING = "canary-sitemaps"
-    sitemap_s3_filename = os.environ.get('SITEMAP_S3_FILE_NAME')
+    sitemap_s3_filename = os.environ.get('SITEMAP_S3_FILE_NAME') or "sitemap.xml"
     print("sitemap_s3_filename: " + sitemap_s3_filename)
     s3_client = boto3.client('s3')
     filename = "./canary/sitemaps/" + sitemap_s3_filename

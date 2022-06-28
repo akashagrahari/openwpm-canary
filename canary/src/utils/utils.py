@@ -36,9 +36,12 @@ def write_payload_to_s3(payload, username):
         Key= 'asdasd'
     )
 
-def upload_file_to_s3(bucket, file_path, file_name):
+def upload_file_to_s3(bucket, file_path, file_name, is_public):
     s3 = boto3.resource('s3')
-    result = s3.Bucket(bucket).upload_file(file_path,file_name) #ExtraArgs={'ACL':'public-read'}
+    if(is_public):
+        result = s3.Bucket(bucket).upload_file(file_path,file_name, ExtraArgs={'ACL':'public-read'}) #
+    else:
+        result = s3.Bucket(bucket).upload_file(file_path,file_name) #
     print(result)
 
 # write_payload_to_s3(payload, "test")

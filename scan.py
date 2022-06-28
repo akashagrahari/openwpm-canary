@@ -194,5 +194,5 @@ if ANALYSE == True:
                 json.dump(full_site_payload, outfile, ensure_ascii=False, indent=4)
                 print("Dumped full paylaod to file for: "  + domainData["domainName"])
         print("uploading payload to s3")
-        utils.write_payload_to_s3(json.dumps(full_site_payload, ensure_ascii=False, indent=4).encode('UTF-8'), domainData["domainName"])
-        # utils.upload_file_to_s3("canary-payloads", file_path, domainData["domainName"] + '.json')
+        # utils.write_payload_to_s3(json.dumps(full_site_payload, ensure_ascii=False, indent=4).encode('UTF-8'), domainData["domainName"])
+        utils.upload_file_to_s3("canary-payloads", file_path, domainData["domainName"].split('.')[1] + '.json', is_public=True)

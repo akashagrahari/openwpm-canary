@@ -47,7 +47,7 @@ def save_pages(page_limit = 0, sitemap_path = '', domain=''):
     file_path = './canary/output/pages/' + file_name
     with open(file_path, 'w+', encoding='utf-8') as outfile:
             json.dump(sites, outfile, ensure_ascii=False, indent=4)
-    utils.upload_file_to_s3("canary-scanned-pages", file_path, file_name)
+    utils.upload_file_to_s3("canary-scanned-pages", file_path, file_name, is_public=False)
     print("Wrote site URLs to file")
     return sites
 
